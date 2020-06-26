@@ -1,0 +1,27 @@
+{
+  "name": "roo-map",
+  "version": "1.0.0",
+  "description": "",
+  "private": true,
+  "scripts": {
+    "build": "webpack -p",
+    "build+dev": "webpack -d -w",
+    "start": "webpack-dev-server"
+  },
+  "repository": {
+    "type": "git",
+    "url": "github.com/jameswp/roo-map"
+  },
+  "author": "James Peach",
+  "license": "UNLICENSED",
+  "devDependencies": {
+    "ts-loader": "^7.0.5",
+    "typescript": "^3.9.5",
+    "webpack": "^4.43.0",
+    "webpack-cli": "^3.3.11",
+    "webpack-dev-server": "^3.11.0"
+  },
+  "dependencies": {
+    "three": "^0.117.1"
+  }
+}
