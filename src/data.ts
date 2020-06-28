@@ -6,13 +6,20 @@ enum CellType {
     STICKEY = 2,
     PLAYER = 3,
     EXIT = 4,
-    WEST_STAIR = 5,
+    EAST_STAIR = 5,
     NORTH_STAIR = 6,
-    EAST_STAIR = 7,
+    WEST_STAIR = 7,
     SOUTH_STAIR = 8,
+    LIFT = 9, // uses data, target height
+    LIFT_NS = 10,
+    LIFT_EW = 11,
+    BREAKABLE = 13, // 0==refresh, 1==forever
+    JUMPER= 14, // uses data, target height
     TELEPORTER = 15,
-    SLIDE = 16,
+    SLIDE = 16, // 0==north, 3==east, 4==south, 1==west
     SWITCH = 17,
+    BRIDGE_NS = 18, // uses data, linked switch
+    BRIDGE_EW = 19, // uses data, linked switch
     SLIPPY = 21,
     OBJECT = 22,
     DESTRUCTABLE = 23
@@ -20,10 +27,17 @@ enum CellType {
 enum CellItem { 
     NOTHING = 0, 
     GEM = 1, 
-    FOE = 2, 
-    FRIEND = 3, 
-    SPEED = 7, 
-    BOMB = 9 
+    FOE = 2, // uses data 4==clever, 3==greedy, 1==reaceexit
+    THROE = 3, // uses data 5==friend
+    PARACHUTE = 5,
+    TIME = 6, 
+    LIFE = 7, 
+    FREEZE = 8, 
+    BOMB = 9, 
+    SPEED = 10, 
+    PROTECTION = 13,
+    SPAWNER = 100, // uses data somehow
+    SURPRISE = 255 
 };
 
 export class Cell {
@@ -37,7 +51,7 @@ export class Cell {
     get data(): Readonly<Uint8Array> { return this._data; }
 
     get text(): string {
-        return `height=${this.height}, type=${CellType[this.type]}, item=${CellItem[this.item]}, data=${this.data}`;
+        return `height=${this.height}, type=${CellType[this.type]}, item=${CellItem[this.item]}, thing=${this.thing}, data=${this.data}`;
     }
 };
 
@@ -45,6 +59,8 @@ export class ParsedLevel {
     public xsize: number;
     public ysize: number;
     public cells: Cell[] = new Array();
+    public timeGiven: number;
+    public gemsRequired: number;
 
 
     get numGems(): number {
@@ -78,19 +94,59 @@ export class ParsedLevel {
                 if (cell.type == CellType.SOUTH_STAIR) { d.color('grey'); d.vert(); }
                 if (cell.type == CellType.WEST_STAIR) { d.color('grey'); d.horiz(); }
                 if (cell.type == CellType.EAST_STAIR) { d.color('grey'); d.horiz(); }
+                if (cell.type == CellType.LIFT_EW) { d.color('blue'); d.horiz(); }
+                if (cell.type == CellType.LIFT_NS) { d.color('blue'); d.vert(); }
                 if (cell.type == CellType.EXIT) { d.color('red'); d.center(); }
                 if (cell.type == CellType.OBJECT) { d.color('grey'); d.tile(); }
-                if (cell.type == CellType.PLAYER) { d.color('white'); d.center(); }
+                if (cell.type == CellType.PLAYER) { d.color('orange'); d.center(); }
                 if (cell.type == CellType.SWITCH) { d.color('pink'); d.center(); }
                 if (cell.type == CellType.SLIPPY) { d.color('lightblue'); d.center(); }
                 if (cell.type == CellType.TELEPORTER) { d.color('purple'); d.center(); }
                 if (cell.type == CellType.DESTRUCTABLE) { d.color('yellow'); d.center(); }
+                if (cell.type == CellType.BREAKABLE) { d.color('white'); d.center(); }
+                if (cell.type == CellType.STICKEY) { d.color('orange'); d.hash(); }
+                if (cell.type == CellType.BRIDGE_EW) { d.color('orange'); d.horiz(); }
+                if (cell.type == CellType.BRIDGE_NS) { d.color('orange'); d.vert(); }
+                if (cell.type == CellType.LIFT) { d.color('pink'); d.hash(); }
+                if (cell.type == CellType.JUMPER) { d.color('pink'); d.hash(); }
 
-                if (cell.item == CellItem.GEM) { d.color('#00ff00'); d.cross(); }
-                if (cell.item == CellItem.BOMB) { d.color('yellow'); d.cross(); }
-                if (cell.item == CellItem.FOE) { d.color('blue'); d.cross(); }
-                if (cell.item == CellItem.FRIEND) { d.color('lightblue'); d.cross(); }
-                if (cell.item == CellItem.SPEED) { d.color('pink'); d.cross(); }
+                switch(cell.item) {
+                    case CellItem.GEM: d.color('#00ff00'); break;
+                    case CellItem.BOMB: d.color('yellow'); break;
+                    case CellItem.FOE: d.color('blue'); break;
+                    case CellItem.THROE: d.color('lightblue'); break;
+                    case CellItem.LIFE: d.color('pink'); break;
+                    case CellItem.TIME: d.color('lightyellow'); break;
+                    case CellItem.FREEZE: d.color('lightyellow'); break;
+                    case CellItem.SPEED: d.color('lightyellow'); break;
+                    case CellItem.PARACHUTE: d.color('lightyellow'); break;
+                    case CellItem.PROTECTION: d.color('lightyellow'); break;
+                    case CellItem.SPAWNER: d.color('lightyellow'); break;
+                    case CellItem.SURPRISE: d.color('lightyellow'); break;
+                }
+                
+                switch(cell.item) {
+                    case CellItem.GEM:
+                    case CellItem.BOMB:
+                    case CellItem.FOE:
+                    case CellItem.THROE:
+                    case CellItem.LIFE:
+                    case CellItem.TIME:
+                    case CellItem.FREEZE:
+                    case CellItem.SPEED:
+                    case CellItem.PARACHUTE:
+                    case CellItem.PROTECTION:
+                    case CellItem.SPAWNER:
+                    case CellItem.SURPRISE:
+                        d.cross();
+                        break;
+                    case CellItem.NOTHING:
+                        break;
+                    default:
+                        if(cell.type != CellType.NOTHING) {
+                            d.question();
+                        }
+                }  
             }
         }
 

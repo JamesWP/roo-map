@@ -19,16 +19,18 @@ class LevelFileRenderer {
 
     async createElement(): Promise<HTMLElement> {
         let fileEl = document.createElement('div');
-        fileEl.innerHTML = `<br/>File information: name <strong> ${this.name} </strong> `;
-        fileEl.innerHTML += `size <strong> ${this.size} bytes</strong> `;
+        fileEl.innerHTML = `<br/>File information: <br/>name <strong> ${this.name} </strong> `;
+        fileEl.innerHTML += `<br/>size <strong> ${this.size} bytes</strong> `;
 
         let parsedLevel = await this.level;
 
-        fileEl.innerHTML += `<strong>${parsedLevel.xsize}</strong> x `;
+        fileEl.innerHTML += `<br/><strong>${parsedLevel.xsize}</strong> x `;
         fileEl.innerHTML += `<strong>${parsedLevel.ysize}</strong> `;
 
 
-        fileEl.innerHTML += `<strong>${parsedLevel.numGems}</strong> gems`;
+        fileEl.innerHTML += `<br/><strong>${parsedLevel.numGems}</strong> gems`;
+        fileEl.innerHTML += `<br/><strong>${parsedLevel.gemsRequired}</strong> required`;
+        fileEl.innerHTML += `<br/><strong>${parsedLevel.timeGiven}</strong> seconds`;
 
         let canvas = document.createElement('canvas');
         canvas.width = 200;
@@ -94,6 +96,10 @@ class LevelTransformStream {
                 position += 4;
             }
         }
+        this.level.gemsRequired = view.getUint32(position, true);
+        position +=4;
+        this.level.timeGiven = view.getUint32(position, true);
+        position +=4;
     }
 
     get level(): ParsedLevel { return this.loadingLevel; }
