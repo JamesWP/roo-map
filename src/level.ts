@@ -37,9 +37,22 @@ class LevelFileRenderer {
         canvas.style.display = 'block';
 
         let context = canvas.getContext('2d');
-        parsedLevel.renderTo(context);
+        let transform = parsedLevel.renderTo(context);
 
         fileEl.appendChild(canvas);
+
+        let infoEl = document.createElement('span');
+        fileEl.appendChild(infoEl);
+        infoEl.style.display = 'none';
+
+        canvas.addEventListener('mousemove', (e: MouseEvent) => {
+            let x = e.pageX - canvas.offsetLeft;
+            let y = e.pageY - canvas.offsetTop;
+            [x, y] = transform(x, y);
+            let cell = parsedLevel.getCell(x, y);
+            infoEl.innerHTML = `${x} x ${y}: Cell = ${cell?.text}`;
+            infoEl.style.display = 'block';
+        });
 
         return fileEl;
     }
@@ -48,13 +61,10 @@ class LevelFileRenderer {
 class LevelTransformStream {
     private loadingLevel: ParsedLevel;
 
-    private numcells = 0;
-
     private buffer = new ArrayBuffer(0);
     public done = false;
 
     constructor() {
-        let transformer = this;
         this.loadingLevel = new ParsedLevel();
     }
 
@@ -73,13 +83,13 @@ class LevelTransformStream {
         let position = 0;
 
         this.done = true;
-        this.level.xsize = view.getUint8(position);
-        this.level.ysize = view.getUint8(position + 1);
+        this.level.ysize = view.getUint8(position);
+        this.level.xsize = view.getUint8(position + 1);
 
         position += 2;
 
         for (let x = 0; x < this.level.xsize; x++) {
-            for (let y = 0; y < this.level.ysize; y++) {
+            for (let y = this.level.ysize - 1; y >= 0; y--) {
                 this.level.cells[x + y * this.level.xsize] = new Cell(new Uint8Array(this.buffer).slice(position, position + 4));
                 position += 4;
             }
